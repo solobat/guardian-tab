@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- 背景圆形 -->
+  <circle cx="12" cy="12" r="11" fill="url(#cryptoGradient)"/>
+  
+  <!-- 导航元素 -->
+  <path d="M12 3 L 16 12 L 12 21 L 8 12 Z" fill="#2A2A72" stroke="#FFFFFF" stroke-width="0.5" opacity="0.7"/>
+  <path d="M3 12 L 12 8 L 21 12 L 12 16 Z" fill="#2A2A72" stroke="#FFFFFF" stroke-width="0.5" opacity="0.7"/>
+  
+  <!-- 中心圆形 -->
+  <circle cx="12" cy="12" r="5" fill="#FFFFFF"/>
+  
+  <!-- 加密货币符号 (简化的比特币符号) -->
+  <path d="M12 7 L12 17 M9 10 L15 10 M9 14 L15 14" stroke="#5D4FFF" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- 定义渐变 -->
+  <defs>
+    <linearGradient id="cryptoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5D4FFF" />
+      <stop offset="100%" stop-color="#26D0CE" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -87,13 +87,13 @@ const TokenList: React.FC<TokenListProps> = ({ tokens }) => {
                   )}
                   <h3 className="text-sm font-medium">{token.symbol}</h3>
                 </div>
-                <span className="text-xs opacity-70">{token.name.substring(0, 8)}</span>
+                <span className="text-xs opacity-70 hidden 2xl:inline">{token.name.substring(0, 8)}</span>
               </div>
               
               <div className="mt-1">
                 {tokenData.price !== null ? (
                   <div className={`text-sm font-bold ${isPositive ? 'text-success' : 'text-error'}`}>
-                    ${tokenData.price.toFixed(2)}
+                    ${tokenData.price.toPrecision(5)}
                   </div>
                 ) : (
                   <div className="text-sm font-bold">价格未知</div>

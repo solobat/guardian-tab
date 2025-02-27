@@ -51,6 +51,22 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   getTokenPrice: (symbol: string) => {
     const { markets, priceHistory } = get()
     
+    // 检查是否是复合代币 (如 ETH/BTC)
+    if (symbol.includes('/')) {
+      const [baseSymbol, quoteSymbol] = symbol.split('/')
+      
+      // 获取基础代币和引用代币的价格
+      const basePrice = get().getTokenPrice(baseSymbol)
+      const quotePrice = get().getTokenPrice(quoteSymbol)
+      
+      // 如果两个价格都有效，计算比值
+      if (basePrice !== null && quotePrice !== null && quotePrice !== 0) {
+        return basePrice / quotePrice
+      }
+      
+      return null
+    }
+    
     // 标准化代币符号
     const normalizedSymbol = symbol.toUpperCase()
     
@@ -85,6 +101,23 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   },
 
   getTokenPriceChange: (symbol: string, timeframe = '24h') => {
+    // 检查是否是复合代币 (如 ETH/BTC)
+    if (symbol.includes('/')) {
+      const [baseSymbol, quoteSymbol] = symbol.split('/')
+      
+      // 获取基础代币和引用代币的价格变化
+      const baseChange = get().getTokenPriceChange(baseSymbol, timeframe)
+      const quoteChange = get().getTokenPriceChange(quoteSymbol, timeframe)
+      
+      // 如果两个变化都有效，计算近似的比值变化
+      // 比值变化 ≈ 基础变化 - 引用变化
+      if (baseChange !== null && quoteChange !== null) {
+        return baseChange - quoteChange
+      }
+      
+      return null
+    }
+    
     const { markets } = get()
     
     // 标准化代币符号

@@ -3,7 +3,7 @@ import { useTokenStore } from '../../store/token'
 import { useNavigationStore } from '../../store/navigation'
 import { Token } from '../../types/token'
 import { Navigation } from '../../types/navigation'
-import { SettingsIcon } from '../../assets/icons'
+import { SettingsIcon, DeleteIcon } from '../../assets/icons'
 
 const Settings: React.FC = () => {
   const { tokens, addToken, removeToken, updateToken } = useTokenStore()
@@ -145,7 +145,7 @@ const Settings: React.FC = () => {
                           <img 
                             src={newToken.icon} 
                             alt="预览" 
-                            className="max-w-full max-h-full"
+                            className="max-w-[80%] max-h-[80%] object-contain"
                             onError={(e) => {
                               // 如果图片加载失败，清空图标URL
                               const target = e.target as HTMLImageElement
@@ -177,24 +177,27 @@ const Settings: React.FC = () => {
                           <td>{token.name}</td>
                           <td>{token.symbol}</td>
                           <td>
-                            {token.icon && (
-                              <img 
-                                src={token.icon} 
-                                alt={token.name} 
-                                className="w-6 h-6"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
-                                }}
-                              />
-                            )}
+                            <div className="w-8 h-8 flex items-center justify-center bg-base-200 rounded">
+                              {token.icon && (
+                                <img 
+                                  src={token.icon} 
+                                  alt={token.name} 
+                                  className="max-w-[80%] max-h-[80%] object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                                  }}
+                                />
+                              )}
+                            </div>
                           </td>
                           <td>
                             <button
-                              className="btn btn-sm btn-error"
+                              className="btn btn-sm btn-ghost text-error"
                               onClick={() => removeToken(token.id)}
+                              title="删除"
                             >
-                              删除
+                              <DeleteIcon />
                             </button>
                           </td>
                         </tr>
@@ -236,7 +239,7 @@ const Settings: React.FC = () => {
                           <img 
                             src={newNavigation.icon} 
                             alt="预览" 
-                            className="max-w-full max-h-full"
+                            className="max-w-[80%] max-h-[80%] object-contain"
                             onError={(e) => {
                               // 如果图片加载失败，清空图标URL
                               const target = e.target as HTMLImageElement
@@ -256,45 +259,53 @@ const Settings: React.FC = () => {
                   <table className="table w-full">
                     <thead>
                       <tr>
-                        <th>名称</th>
-                        <th>URL</th>
-                        <th>图标</th>
-                        <th>操作</th>
+                        <th className="w-1/5">名称</th>
+                        <th className="w-2/5">URL</th>
+                        <th className="w-1/5">图标</th>
+                        <th className="w-1/5">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {navigations.map((nav) => (
                         <tr key={nav.id}>
-                          <td>{nav.name}</td>
-                          <td>
-                            <a
-                              href={nav.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="link"
-                            >
-                              {nav.url}
-                            </a>
+                          <td className="max-w-[100px]">
+                            <span className="block truncate">{nav.name}</span>
+                          </td>
+                          <td className="max-w-[200px]">
+                            <div className="w-full overflow-hidden">
+                              <a
+                                href={nav.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="link block truncate"
+                                title={nav.url}
+                              >
+                                {nav.url}
+                              </a>
+                            </div>
                           </td>
                           <td>
-                            {nav.icon && (
-                              <img 
-                                src={nav.icon} 
-                                alt={nav.name} 
-                                className="w-6 h-6"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
-                                }}
-                              />
-                            )}
+                            <div className="w-8 h-8 flex items-center justify-center bg-base-200 rounded">
+                              {nav.icon && (
+                                <img 
+                                  src={nav.icon} 
+                                  alt={nav.name} 
+                                  className="max-w-[80%] max-h-[80%] object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                                  }}
+                                />
+                              )}
+                            </div>
                           </td>
                           <td>
                             <button
-                              className="btn btn-sm btn-error"
+                              className="btn btn-sm btn-ghost text-error"
                               onClick={() => removeNavigation(nav.id)}
+                              title="删除"
                             >
-                              删除
+                              <DeleteIcon />
                             </button>
                           </td>
                         </tr>

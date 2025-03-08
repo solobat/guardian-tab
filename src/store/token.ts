@@ -5,10 +5,13 @@ import { Token } from '../types/token'
 interface TokenState {
   tokens: Token[]
   loading: boolean
+  editingToken: Token | null
   addToken: (token: Token) => void
   removeToken: (id: string) => void
   updateToken: (id: string, updates: Partial<Token>) => void
   fetchTokens: () => Promise<void>
+  setEditingToken: (token: Token | null) => void
+  reorderTokens: (sourceIndex: number, destinationIndex: number) => void
 }
 
 export const useTokenStore = create<TokenState>()(
@@ -16,6 +19,7 @@ export const useTokenStore = create<TokenState>()(
     (set, get) => ({
       tokens: [],
       loading: false,
+      editingToken: null,
       
       addToken: (token) => {
         set((state) => ({
@@ -34,6 +38,7 @@ export const useTokenStore = create<TokenState>()(
           tokens: state.tokens.map((token) =>
             token.id === id ? { ...token, ...updates } : token
           ),
+          editingToken: null,
         }))
       },
       
@@ -53,6 +58,20 @@ export const useTokenStore = create<TokenState>()(
           })
         }
         set({ loading: false })
+      },
+      
+      setEditingToken: (token) => {
+        set({ editingToken: token })
+      },
+      
+      reorderTokens: (sourceIndex, destinationIndex) => {
+        set((state) => {
+          const newTokens = [...state.tokens]
+          const [removed] = newTokens.splice(sourceIndex, 1)
+          newTokens.splice(destinationIndex, 0, removed)
+          
+          return { tokens: newTokens }
+        })
       },
     }),
     {

@@ -33,12 +33,14 @@ interface NavigationState {
   navigations: Navigation[]
   loading: boolean
   initialized: boolean
+  editingNavigation: Navigation | null
   addNavigation: (navigation: Navigation) => void
   removeNavigation: (id: string) => void
   updateNavigation: (id: string, updates: Partial<Navigation>) => void
   fetchNavigations: () => Promise<void>
   isAllowedDomain: (url: string) => boolean
   reorderNavigations: (sourceIndex: number, destinationIndex: number) => void
+  setEditingNavigation: (navigation: Navigation | null) => void
 }
 
 export const useNavigationStore = create<NavigationState>()(
@@ -47,6 +49,7 @@ export const useNavigationStore = create<NavigationState>()(
       navigations: [],
       loading: false,
       initialized: false,
+      editingNavigation: null,
       
       addNavigation: (navigation) => {
         set((state) => ({
@@ -65,6 +68,7 @@ export const useNavigationStore = create<NavigationState>()(
           navigations: state.navigations.map((nav) =>
             nav.id === id ? { ...nav, ...updates } : nav
           ),
+          editingNavigation: null,
         }))
       },
       
@@ -130,11 +134,18 @@ export const useNavigationStore = create<NavigationState>()(
           return { navigations: newNavigations }
         })
       },
+      
+      setEditingNavigation: (navigation) => {
+        set({ editingNavigation: navigation })
+      },
     }),
     {
       name: 'navigation-storage',
       storage: createJSONStorage(() => chromeStorageAdapter),
-      partialize: (state) => ({ navigations: state.navigations }),
+      partialize: (state) => ({ 
+        navigations: state.navigations,
+        editingNavigation: undefined
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.initialized = true

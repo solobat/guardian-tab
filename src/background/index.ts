@@ -100,10 +100,13 @@ const getNavigationData = async () => {
 const isAllowedDomain = (url: string, navigations: any[]) => {
   try {
     const urlObj = new URL(url)
+    const urlMainDomain = extractMainDomain(urlObj.hostname)
+    
     const result = navigations.some((nav) => {
       try {
         const navUrlObj = new URL(nav.url)
-        return urlObj.hostname === navUrlObj.hostname
+        const navMainDomain = extractMainDomain(navUrlObj.hostname)
+        return urlMainDomain === navMainDomain
       } catch (e) {
         console.error('无效的导航 URL:', nav.url, e)
         return false
@@ -115,6 +118,25 @@ const isAllowedDomain = (url: string, navigations: any[]) => {
     console.error('无效的 URL:', url, error)
     return false
   }
+}
+
+// 提取主域名
+const extractMainDomain = (hostname: string) => {
+  // 处理 IP 地址
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return hostname
+  }
+  
+  // 分割主机名
+  const parts = hostname.split('.')
+  
+  // 如果只有两部分或更少，直接返回整个主机名
+  if (parts.length <= 2) {
+    return hostname
+  }
+  
+  // 提取最后两部分作为主域名
+  return parts.slice(-2).join('.')
 }
 
 // 初始化

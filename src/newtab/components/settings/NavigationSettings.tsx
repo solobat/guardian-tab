@@ -1,10 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigationStore } from '../../../store/navigation'
 import { Navigation } from '../../../types/navigation'
 import { DeleteIcon, EditIcon } from '../../../assets/icons'
 
-const NavigationSettings: React.FC = () => {
+interface NavigationSettingsProps {
+  editingNavId?: string
+}
+
+const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId }) => {
   const { navigations, addNavigation, removeNavigation, updateNavigation } = useNavigationStore()
+  const [editingNavigation, setEditingNavigation] = useState<Navigation | null>(null)
 
   // Navigation 表单状态
   const [newNavigation, setNewNavigation] = useState<Partial<Navigation>>({
@@ -12,22 +17,36 @@ const NavigationSettings: React.FC = () => {
     url: '',
     icon: '',
   })
-  
-  // 添加编辑状态
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
 
-  const handleAddNavigation = () => {
+  const setEditingNavigationAndNewNav = (navigation: Navigation | null) => {
+    setEditingNavigation(navigation)
+    setNewNavigation({
+      name: navigation?.name || '',
+      url: navigation?.url || '',
+      icon: navigation?.icon || '',
+    })
+  }
+
+  // 当编辑的导航变化时，更新表单
+  useEffect(() => {
+    if (editingNavId) {
+      const navigation = navigations.find(nav => nav.id === editingNavId)
+      setEditingNavigationAndNewNav(navigation || null)
+    } else {
+      setEditingNavigation(null)
+      setNewNavigation({ name: '', url: '', icon: '' })
+    }
+  }, [editingNavId, navigations])
+
+  const handleSubmit = () => {
     if (newNavigation.name && newNavigation.url) {
-      if (isEditing && editingId) {
+      if (editingNavigation) {
         // 更新现有导航
-        updateNavigation(editingId, {
+        updateNavigation(editingNavigation.id, {
           name: newNavigation.name,
           url: newNavigation.url,
           icon: newNavigation.icon || '',
         })
-        setIsEditing(false)
-        setEditingId(null)
       } else {
         // 添加新导航
         addNavigation({
@@ -37,26 +56,12 @@ const NavigationSettings: React.FC = () => {
           icon: newNavigation.icon || '',
         })
       }
-      setNewNavigation({ name: '', url: '', icon: '' })
+      setEditingNavigationAndNewNav(null)
     }
   }
 
-  // 开始编辑导航
-  const handleEditNavigation = (nav: Navigation) => {
-    setNewNavigation({
-      name: nav.name,
-      url: nav.url,
-      icon: nav.icon,
-    })
-    setEditingId(nav.id)
-    setIsEditing(true)
-  }
-  
-  // 取消编辑
-  const handleCancelEdit = () => {
-    setNewNavigation({ name: '', url: '', icon: '' })
-    setEditingId(null)
-    setIsEditing(false)
+  const handleCancel = () => {
+    setEditingNavigationAndNewNav(null)
   }
 
   // 尝试从URL获取favicon
@@ -110,7 +115,6 @@ const NavigationSettings: React.FC = () => {
                   alt="预览" 
                   className="max-w-[80%] max-h-[80%] object-contain"
                   onError={(e) => {
-                    // 如果图片加载失败，清空图标URL
                     const target = e.target as HTMLImageElement
                     target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
                   }}
@@ -120,11 +124,11 @@ const NavigationSettings: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2 mt-2">
-          <button className="btn btn-primary" onClick={handleAddNavigation}>
-            {isEditing ? '保存修改' : '添加导航'}
+          <button className="btn btn-primary" onClick={handleSubmit}>
+            {editingNavigation ? '更新导航' : '添加导航'}
           </button>
-          {isEditing && (
-            <button className="btn btn-outline" onClick={handleCancelEdit}>
+          {editingNavigation && (
+            <button className="btn btn-outline" onClick={handleCancel}>
               取消
             </button>
           )}
@@ -143,7 +147,7 @@ const NavigationSettings: React.FC = () => {
           </thead>
           <tbody>
             {navigations.map((nav) => (
-              <tr key={nav.id} className={editingId === nav.id ? 'bg-base-200' : ''}>
+              <tr key={nav.id} className={editingNavigation?.id === nav.id ? 'bg-base-200' : ''}>
                 <td className="max-w-[100px]">
                   <span className="block truncate">{nav.name}</span>
                 </td>
@@ -179,7 +183,7 @@ const NavigationSettings: React.FC = () => {
                   <div className="flex gap-2">
                     <button
                       className="btn btn-sm btn-ghost text-info"
-                      onClick={() => handleEditNavigation(nav)}
+                      onClick={() => setEditingNavigationAndNewNav(nav)}
                       title="编辑"
                     >
                       <EditIcon />

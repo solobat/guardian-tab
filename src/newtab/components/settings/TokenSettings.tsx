@@ -3,7 +3,12 @@ import { useTokenStore } from '../../../store/token'
 import { Token } from '../../../types/token'
 import { DeleteIcon, EditIcon } from '../../../assets/icons'
 
-const TokenSettings: React.FC = () => {
+interface TokenSettingsProps {
+  editingTokenId?: string
+}
+
+const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
+  console.log('editingTokenId', editingTokenId)
   const { tokens, addToken, removeToken, updateToken, editingToken, setEditingToken } = useTokenStore()
 
   // Token 表单状态
@@ -13,18 +18,24 @@ const TokenSettings: React.FC = () => {
     icon: '',
   })
 
+  const setEditingTokenAndNewToken = (token: Token | null) => {
+    setEditingToken(token)
+    setNewToken({
+      name: token?.name || '',
+      symbol: token?.symbol || '',
+      icon: token?.icon || '',
+    })
+  }
   // 当编辑的代币变化时，更新表单
   useEffect(() => {
-    if (editingToken) {
-      setNewToken({
-        name: editingToken.name,
-        symbol: editingToken.symbol,
-        icon: editingToken.icon,
-      })
+    if (editingTokenId) {
+      const token = tokens.find(token => token.id === editingTokenId)
+      setEditingTokenAndNewToken(token || null)
     } else {
+      setEditingToken(null)
       setNewToken({ name: '', symbol: '', icon: '' })
     }
-  }, [editingToken])
+  }, [editingTokenId, tokens, setEditingToken])
 
   // 当名称或符号变化时，自动生成图标URL
   useEffect(() => {
@@ -63,6 +74,13 @@ const TokenSettings: React.FC = () => {
     setEditingToken(null)
     setNewToken({ name: '', symbol: '', icon: '' })
   }
+
+  // 使用 editingTokenId 来高亮或展开正在编辑的代币项
+  useEffect(() => {
+    if (editingTokenId) {
+      // 可以滚动到对应的项，或者展开编辑表单等
+    }
+  }, [editingTokenId])
 
   return (
     <div>
@@ -152,7 +170,7 @@ const TokenSettings: React.FC = () => {
                   <div className="flex gap-2">
                     <button
                       className="btn btn-sm btn-ghost text-info"
-                      onClick={() => setEditingToken(token)}
+                      onClick={() => setEditingTokenAndNewToken(token)}
                       title="编辑"
                     >
                       <EditIcon />

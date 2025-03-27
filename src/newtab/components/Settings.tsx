@@ -6,6 +6,7 @@ import { Navigation } from '../../types/navigation'
 import { SettingsIcon, DeleteIcon } from '../../assets/icons'
 import TokenSettings from './settings/TokenSettings'
 import NavigationSettings from './settings/NavigationSettings'
+import { eventBus } from '../../utils/eventBus'
 
 const Settings: React.FC = () => {
   const { tokens, addToken, removeToken, updateToken } = useTokenStore()
@@ -13,6 +14,7 @@ const Settings: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('tokens')
+  const [editingItem, setEditingItem] = useState<{ id: string, type: 'token' | 'navigation' } | null>(null)
 
   // Token 表单状态
   const [newToken, setNewToken] = useState<Partial<Token>>({
@@ -38,6 +40,30 @@ const Settings: React.FC = () => {
       setNewToken(prev => ({ ...prev, icon: iconUrl }))
     }
   }, [newToken.name, newToken.symbol])
+
+  useEffect(() => {
+    const handleOpenSettings = (data: { 
+      tab: 'tokens' | 'navigations',
+      itemId: string 
+    }) => {
+      setIsOpen(true)
+      setActiveTab(data.tab)
+      setEditingItem({ 
+        id: data.itemId, 
+        type: data.tab === 'tokens' ? 'token' : 'navigation' 
+      })
+    }
+
+    eventBus.on('openSettings', handleOpenSettings)
+    return () => eventBus.off('openSettings', handleOpenSettings)
+  }, [])
+
+  // 当对话框关闭时重置编辑状态
+  useEffect(() => {
+    if (!isOpen) {
+      setEditingItem(null)
+    }
+  }, [isOpen])
 
   const handleAddToken = () => {
     if (newToken.name && newToken.symbol) {
@@ -116,8 +142,12 @@ const Settings: React.FC = () => {
               </a>
             </div>
 
-            {activeTab === 'tokens' && <TokenSettings />}
-            {activeTab === 'navigations' && <NavigationSettings />}
+            {activeTab === 'tokens' && (
+              <TokenSettings editingTokenId={editingItem?.type === 'token' ? editingItem.id : undefined} />
+            )}
+            {activeTab === 'navigations' && (
+              <NavigationSettings editingNavId={editingItem?.type === 'navigation' ? editingItem.id : undefined} />
+            )}
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import { Token } from '../../types/token'
 import { useMarketStore } from '../../store/market'
 import { SUPPORTED_PLATFORMS } from '../../server/services/market/platforms/config'
 import { CryptoCurrencyIcon } from '../../assets/icons'
+import { useTokenStore } from '../../store/token'
 
 interface TokenListProps {
   tokens: Token[]
@@ -10,8 +11,11 @@ interface TokenListProps {
 
 const TokenList: React.FC<TokenListProps> = ({ tokens }) => {
   const { getTokenPrice, getTokenPriceChange } = useMarketStore()
+  const { reorderTokens } = useTokenStore()
   const [prices, setPrices] = useState<Record<string, { price: number | null, change: number | null }>>({})
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({})
+  const [draggedItem, setDraggedItem] = useState<number | null>(null)
+  const [dragOverItem, setDragOverItem] = useState<number | null>(null)
   
   // 使用 useCallback 减少不必要的函数重建
   const updatePrices = useCallback(() => {
@@ -61,15 +65,43 @@ const TokenList: React.FC<TokenListProps> = ({ tokens }) => {
     }))
   }
 
+  // 添加拖拽相关处理函数
+  const handleDragStart = (index: number) => {
+    setDraggedItem(index)
+  }
+  
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverItem(index)
+  }
+  
+  const handleDragEnd = () => {
+    if (draggedItem !== null && dragOverItem !== null && draggedItem !== dragOverItem) {
+      reorderTokens(draggedItem, dragOverItem)
+    }
+    
+    setDraggedItem(null)
+    setDragOverItem(null)
+  }
+
   return (
     <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-      {tokens.map((token) => {
+      {tokens.map((token, index) => {
         const tokenData = prices[token.symbol] || { price: null, change: null }
         const isPositive = tokenData.change !== null ? tokenData.change >= 0 : true
         const imageLoadFailed = failedImages[token.id]
         
         return (
-          <div key={token.id} className="card bg-base-200 shadow-sm">
+          <div
+            key={token.id}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`card bg-base-200 shadow-sm cursor-move
+              ${draggedItem === index ? 'opacity-50' : ''}
+              ${dragOverItem === index ? 'ring-2 ring-primary' : ''}`}
+          >
             <div className="card-body p-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">

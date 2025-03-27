@@ -11,7 +11,7 @@ interface TokenState {
   updateToken: (id: string, updates: Partial<Token>) => void
   fetchTokens: () => Promise<void>
   setEditingToken: (token: Token | null) => void
-  reorderTokens: (sourceIndex: number, destinationIndex: number) => void
+  reorderTokens: (fromIndex: number, toIndex: number) => void
 }
 
 export const useTokenStore = create<TokenState>()(
@@ -64,12 +64,11 @@ export const useTokenStore = create<TokenState>()(
         set({ editingToken: token })
       },
       
-      reorderTokens: (sourceIndex, destinationIndex) => {
+      reorderTokens: (fromIndex: number, toIndex: number) => {
         set((state) => {
           const newTokens = [...state.tokens]
-          const [removed] = newTokens.splice(sourceIndex, 1)
-          newTokens.splice(destinationIndex, 0, removed)
-          
+          const [movedToken] = newTokens.splice(fromIndex, 1)
+          newTokens.splice(toIndex, 0, movedToken)
           return { tokens: newTokens }
         })
       },

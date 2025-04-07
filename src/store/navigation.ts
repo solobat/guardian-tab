@@ -41,6 +41,9 @@ interface NavigationState {
   isAllowedDomain: (url: string) => boolean
   reorderNavigations: (sourceIndex: number, destinationIndex: number) => void
   setEditingNavigation: (navigation: Navigation | null) => void
+  incrementClickCount: (id: string) => void
+  getUnusedNavigations: () => Navigation[]
+  getActiveNavigations: () => Navigation[]
 }
 
 // 添加备份到 localStorage 的函数
@@ -82,8 +85,12 @@ export const useNavigationStore = create<NavigationState>()(
       
       addNavigation: (navigation) => {
         set((state) => {
-          const newNavigations = [...state.navigations, { ...navigation, id: Date.now().toString() }]
-          // 添加导航后备份到 localStorage
+          const newNavigations = [...state.navigations, { 
+            ...navigation, 
+            id: Date.now().toString(),
+            clickCount: 0,
+            createdAt: Date.now()
+          }]
           backupToLocalStorage(newNavigations)
           return { navigations: newNavigations }
         })
@@ -115,7 +122,6 @@ export const useNavigationStore = create<NavigationState>()(
       fetchNavigations: async () => {
         const { navigations, initialized } = get()
         
-        // 如果已经初始化过且有导航数据，则不再重新加载
         if (initialized && navigations.length > 0) {
           return
         }
@@ -123,7 +129,6 @@ export const useNavigationStore = create<NavigationState>()(
         set({ loading: true })
         
         try {
-          // 尝试从存储中获取导航数据
           const storageData = await chrome.storage.local.get('navigation-storage')
           let storedNavigations: Navigation[] = []
           
@@ -131,60 +136,62 @@ export const useNavigationStore = create<NavigationState>()(
             try {
               const parsedData = JSON.parse(storageData['navigation-storage'])
               storedNavigations = parsedData.state?.navigations || []
+              
+              // 添加数据迁移逻辑
+              storedNavigations = storedNavigations.map(nav => ({
+                ...nav,
+                clickCount: nav.clickCount || 0,
+                createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000 // 默认设为25小时前
+              }))
             } catch (error) {
               console.error('解析导航数据失败:', error)
             }
           }
           
-          // 如果存储中有数据，使用存储的数据
           if (storedNavigations.length > 0) {
             set({
               navigations: storedNavigations,
               initialized: true
             })
-            // 备份到 localStorage
             backupToLocalStorage(storedNavigations)
           } else {
-            // 如果 Chrome 存储中没有数据，尝试从 localStorage 恢复
             const backupNavigations = restoreFromLocalStorage()
             
             if (backupNavigations.length > 0) {
-              // 如果 localStorage 中有备份，使用备份数据
+              // 对备份数据也进行迁移
+              const migratedBackupNavigations = backupNavigations.map(nav => ({
+                ...nav,
+                clickCount: nav.clickCount || 0,
+                createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
+              }))
+              
               set({
-                navigations: backupNavigations,
+                navigations: migratedBackupNavigations,
                 initialized: true
               })
-              // 同时将备份数据同步到 Chrome 存储
               chrome.storage.local.set({
                 'navigation-storage': JSON.stringify({
-                  state: { navigations: backupNavigations }
+                  state: { navigations: migratedBackupNavigations }
                 })
               })
-            } else if (navigations.length > 0) {
-              // 如果当前状态中有数据，保留当前数据
-              set({ initialized: true })
-              // 备份当前数据到 localStorage
-              backupToLocalStorage(navigations)
             }
           }
         } catch (error) {
           console.error('获取导航数据失败:', error)
-          // 发生错误时，尝试从 localStorage 恢复
           const backupNavigations = restoreFromLocalStorage()
           
           if (backupNavigations.length > 0) {
-            // 如果有备份，使用备份数据
+            const migratedBackupNavigations = backupNavigations.map(nav => ({
+              ...nav,
+              clickCount: nav.clickCount || 0,
+              createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
+            }))
+            
             set({
-              navigations: backupNavigations,
+              navigations: migratedBackupNavigations,
               initialized: true,
               loading: false
             })
-            return
-          }
-          
-          // 如果没有备份但当前状态中有数据，则保留当前数据
-          if (navigations.length > 0) {
-            set({ initialized: true })
           }
         } finally {
           set({ loading: false })
@@ -221,12 +228,51 @@ export const useNavigationStore = create<NavigationState>()(
       setEditingNavigation: (navigation) => {
         set({ editingNavigation: navigation })
       },
+
+      incrementClickCount: (id: string) => {
+        set((state) => {
+          const newNavigations = state.navigations.map((nav) =>
+            nav.id === id ? { ...nav, clickCount: (nav.clickCount || 0) + 1 } : nav
+          )
+          backupToLocalStorage(newNavigations)
+          return { navigations: newNavigations }
+        })
+      },
+
+      getUnusedNavigations: () => {
+        const { navigations } = get()
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+        const unused = navigations.filter(nav => {
+          const isUnused = (nav.clickCount === 0 && nav.createdAt < oneDayAgo)
+          console.log(`导航 ${nav.name} 检查:`, {
+            clickCount: nav.clickCount,
+            createdAt: new Date(nav.createdAt).toISOString(),
+            isOld: nav.createdAt < oneDayAgo,
+            isUnused
+          })
+          return isUnused
+        })
+        console.log('未使用导航:', unused)
+        return unused
+      },
+
+      getActiveNavigations: () => {
+        const { navigations } = get()
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+        return navigations.filter(nav => 
+          nav.clickCount > 0 || nav.createdAt >= oneDayAgo
+        )
+      },
     }),
     {
       name: 'navigation-storage',
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ 
-        navigations: state.navigations,
+        navigations: state.navigations.map(nav => ({
+          ...nav,
+          clickCount: nav.clickCount || 0,
+          createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
+        })),
         editingNavigation: undefined
       }),
       onRehydrateStorage: () => (state) => {

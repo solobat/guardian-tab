@@ -54,6 +54,8 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
           name: newNavigation.name,
           url: newNavigation.url,
           icon: newNavigation.icon || '',
+          clickCount: 0,
+          createdAt: Date.now(),
         })
       }
       setEditingNavigationAndNewNav(null)
@@ -139,10 +141,11 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
         <table className="table w-full">
           <thead>
             <tr>
-              <th className="w-1/5">名称</th>
-              <th className="w-2/5">URL</th>
-              <th className="w-1/5">图标</th>
-              <th className="w-1/5">操作</th>
+              <th className="w-1/6">名称</th>
+              <th className="w-2/6">URL</th>
+              <th className="w-1/6">图标</th>
+              <th className="w-1/6">点击次数</th>
+              <th className="w-1/6">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -178,6 +181,12 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
                       />
                     )}
                   </div>
+                </td>
+                <td>
+                  {nav.clickCount || 0}
+                  {nav.clickCount === 0 && nav.createdAt < Date.now() - 24 * 60 * 60 * 1000 && (
+                    <span className="text-warning text-xs ml-2">(未使用)</span>
+                  )}
                 </td>
                 <td>
                   <div className="flex gap-2">

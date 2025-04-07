@@ -84,6 +84,8 @@ const Settings: React.FC = () => {
         name: newNavigation.name,
         url: newNavigation.url,
         icon: newNavigation.icon || '',
+        clickCount: 0,
+        createdAt: Date.now(),
       })
       setNewNavigation({ name: '', url: '', icon: '' })
     }

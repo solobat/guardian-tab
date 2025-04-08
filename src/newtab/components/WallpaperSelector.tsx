@@ -260,6 +260,7 @@ const WallpaperSelector: React.FC = () => {
     setEnabled,
     setWallpaper,
     getAllWallpapers,
+    setUseBingDaily,
   } = useWallpaperStore()
   
   const [isOpen, setIsOpen] = useState(false)
@@ -275,10 +276,9 @@ const WallpaperSelector: React.FC = () => {
       </button>
       
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-base-100 p-4 rounded-lg shadow-xl w-full max-w-md">
-            {/* 标题栏 */}
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-base-100 p-4 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h3 className="text-lg font-medium">壁纸设置</h3>
               <button 
                 className="btn btn-sm btn-circle"
@@ -288,63 +288,73 @@ const WallpaperSelector: React.FC = () => {
               </button>
             </div>
 
-            {/* 启用开关 */}
-            <div className="form-control mb-4">
-              <label className="label cursor-pointer">
-                <span className="label-text">启用壁纸</span>
-                <input 
-                  type="checkbox" 
-                  className="toggle toggle-primary" 
-                  checked={enabled}
-                  onChange={(e) => setEnabled(e.target.checked)}
-                />
-              </label>
-            </div>
-
-            {enabled && (
-              <div className="space-y-4">
-                {/* 壁纸调节控件 */}
-                <WallpaperControls />
-
-                {/* Bing每日壁纸 */}
-                {useBingDaily && <BingDailyWallpaper />}
-
-                {/* 壁纸列表 */}
-                <div>
-                  <div className="text-sm font-medium mb-2">所有壁纸</div>
-                  <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
-                    {/* 无壁纸选项 */}
-                    <div 
-                      className={`aspect-video bg-base-300 flex items-center justify-center rounded cursor-pointer hover:opacity-80 ${
-                        !currentWallpaper ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => setWallpaper(null)}
-                    >
-                      <span className="text-xs">无壁纸</span>
-                    </div>
-                    
-                    {getAllWallpapers().map((wallpaper, index) => {
-                      const isBingWallpaper = wallpaper === bingWallpaper
-                      // 如果是当前的Bing壁纸且未收藏，则跳过（因为已在上方显示）
-                      if (isBingWallpaper && !favoriteWallpapers.includes(wallpaper)) {
-                        return null
-                      }
-
-                      return (
-                        <WallpaperItem 
-                          key={index}
-                          wallpaper={wallpaper}
-                          isBingWallpaper={isBingWallpaper}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* 底部按钮组 */}
-                <WallpaperFooterActions />
+            <div className="overflow-y-auto flex-1 pr-2 
+              scrollbar-thin scrollbar-thumb-rounded-md
+              scrollbar-track-base-200 scrollbar-thumb-primary/50
+              hover:scrollbar-thumb-primary/70">
+              <div className="form-control mb-4">
+                <label className="label cursor-pointer">
+                  <span className="label-text">启用壁纸</span>
+                  <input 
+                    type="checkbox" 
+                    className="toggle toggle-primary" 
+                    checked={enabled}
+                    onChange={(e) => setEnabled(e.target.checked)}
+                  />
+                </label>
               </div>
-            )}
+
+              {enabled && (
+                <div className="space-y-4">
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">使用必应每日壁纸</span>
+                      <input 
+                        type="checkbox" 
+                        className="toggle toggle-primary" 
+                        checked={useBingDaily}
+                        onChange={(e) => setUseBingDaily(e.target.checked)}
+                      />
+                    </label>
+                  </div>
+
+                  <WallpaperControls />
+
+                  {useBingDaily && <BingDailyWallpaper />}
+
+                  <div>
+                    <div className="text-sm font-medium mb-2">所有壁纸</div>
+                    <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+                      <div 
+                        className={`aspect-video bg-base-300 flex items-center justify-center rounded cursor-pointer hover:opacity-80 ${
+                          !currentWallpaper ? 'ring-2 ring-primary' : ''
+                        }`}
+                        onClick={() => setWallpaper(null)}
+                      >
+                        <span className="text-xs">无壁纸</span>
+                      </div>
+                      
+                      {getAllWallpapers().map((wallpaper, index) => {
+                        const isBingWallpaper = wallpaper === bingWallpaper
+                        if (isBingWallpaper && !favoriteWallpapers.includes(wallpaper)) {
+                          return null
+                        }
+
+                        return (
+                          <WallpaperItem 
+                            key={index}
+                            wallpaper={wallpaper}
+                            isBingWallpaper={isBingWallpaper}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <WallpaperFooterActions />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

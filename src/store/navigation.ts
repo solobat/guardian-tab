@@ -44,6 +44,7 @@ interface NavigationState {
   incrementClickCount: (id: string) => void
   getUnusedNavigations: () => Navigation[]
   getActiveNavigations: () => Navigation[]
+  resetNavigation: (id: string) => void
 }
 
 // 添加备份到 localStorage 的函数
@@ -262,6 +263,20 @@ export const useNavigationStore = create<NavigationState>()(
         return navigations.filter(nav => 
           nav.clickCount > 0 || nav.createdAt >= oneDayAgo
         )
+      },
+
+      resetNavigation: (id: string) => {
+        set((state) => {
+          const newNavigations = state.navigations.map((nav) =>
+            nav.id === id ? {
+              ...nav,
+              clickCount: 0,
+              createdAt: Date.now() - 25 * 60 * 60 * 1000  // 设置为25小时前
+            } : nav
+          )
+          backupToLocalStorage(newNavigations)
+          return { navigations: newNavigations }
+        })
       },
     }),
     {

@@ -6,9 +6,10 @@ interface ContextMenuProps {
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
+  onReset?: () => void
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, onEdit, onDelete }) => {
+const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, onEdit, onDelete, onReset }) => {
   useEffect(() => {
     const handleClick = () => onClose()
     document.addEventListener('click', handleClick)
@@ -29,6 +30,16 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, onEdit, onDele
         }}
       >
         编辑
+      </button>
+      <button
+        className="w-full px-4 py-2 text-left hover:bg-base-300 text-warning flex items-center gap-2"
+        onClick={(e) => {
+          e.stopPropagation()
+          onReset?.()
+          onClose()
+        }}
+      >
+        重置点击次数
       </button>
       <button
         className="w-full px-4 py-2 text-left hover:bg-base-300 text-error flex items-center gap-2"

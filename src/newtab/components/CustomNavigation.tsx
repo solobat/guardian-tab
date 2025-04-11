@@ -16,6 +16,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({ navigations }) => {
     removeNavigation, 
     updateNavigation, 
     incrementClickCount,
+    resetNavigation,
     getUnusedNavigations,
     getActiveNavigations 
   } = useNavigationStore()
@@ -106,6 +107,13 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({ navigations }) => {
         show: true,
         navigation: contextMenu.navigation
       })
+      setContextMenu({ show: false, x: 0, y: 0, navigation: null })
+    }
+  }
+
+  const handleReset = () => {
+    if (contextMenu.navigation) {
+      resetNavigation(contextMenu.navigation.id)
       setContextMenu({ show: false, x: 0, y: 0, navigation: null })
     }
   }
@@ -228,6 +236,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({ navigations }) => {
           onClose={() => setContextMenu({ show: false, x: 0, y: 0, navigation: null })}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onReset={handleReset}
         />
       )}
 

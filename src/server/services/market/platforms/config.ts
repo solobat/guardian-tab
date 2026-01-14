@@ -1,4 +1,4 @@
-export const SUPPORTED_PLATFORMS = ['binance', 'okx', 'bybit'] as const
+export const SUPPORTED_PLATFORMS = ['binance', 'bybit'] as const
 
 export type MarketName = (typeof SUPPORTED_PLATFORMS)[number]
 
@@ -9,13 +9,10 @@ export const MarketsConfig: Record<
   }
 > = {
   binance: {
-    sourceType: 'ws',
-  },
-  okx: {
-    sourceType: 'ws',
+    sourceType: 'rest',
   },
   bybit: {
-    sourceType: 'ws',
+    sourceType: 'rest',
   },
 }
 

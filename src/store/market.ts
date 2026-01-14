@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { MarketServiceManager } from '../server/services/market/manager'
 import { MarketInfo } from '../server/services/market/types'
-import { isWsMarket, MarketName, SUPPORTED_PLATFORMS } from '../server/services/market/platforms/config'
+import { SUPPORTED_PLATFORMS } from '../server/services/market/platforms/config'
 
 interface MarketState {
   // 市场数据
@@ -35,8 +35,7 @@ interface MarketState {
   }
 }
 
-const DEFAULT_REFRESH_INTERVAL = 30000 // 30秒
-const WS_REFRESH_INTERVAL = 100 // 10毫秒
+const DEFAULT_REFRESH_INTERVAL = 5000 // 5秒
 
 // 存储定时器的 Map
 const refreshTimers: Map<string, number> = new Map()
@@ -183,15 +182,10 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     // 立即获取一次数据
     get().fetchMarkets(platform)
 
-    // 根据平台类型设置刷新间隔
-    const interval = isWsMarket(platform as MarketName) 
-      ? WS_REFRESH_INTERVAL 
-      : DEFAULT_REFRESH_INTERVAL
-
     // 设置定时刷新
     const timer = window.setInterval(async () => {
       await get().fetchMarkets(platform)
-    }, interval)
+    }, DEFAULT_REFRESH_INTERVAL)
 
     refreshTimers.set(platform, timer)
   },

@@ -80,11 +80,19 @@ const PriceDisplay: React.FC<{
   // 24小时涨跌方向（用于显示）
   const is24hPositive = priceData.change24h !== null ? priceData.change24h >= 0 : true
 
+  // 计算价差百分比
+  const priceDiff = useMemo(() => {
+    if (priceData.price !== null && priceData.indexPrice !== null && priceData.indexPrice !== 0) {
+      return ((priceData.price - priceData.indexPrice) / priceData.indexPrice) * 100
+    }
+    return null
+  }, [priceData.price, priceData.indexPrice])
+
   return (
     <>
       <div className="mt-1">
         {priceData.price !== null ? (
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div 
               className={`text-sm font-mono tracking-tight
                 ${isPriceIncreased ? 'text-green-500' : 'text-red-500'}
@@ -94,7 +102,7 @@ const PriceDisplay: React.FC<{
               ${priceData.price.toPrecision(5)}
             </div>
             {priceData.indexPrice !== null && (
-              <div className="text-[9px] opacity-50 font-mono text-base-content/60">
+              <div className="text-[9px] opacity-50 font-mono text-base-content/60 leading-none">
                 ${priceData.indexPrice.toPrecision(5)}
               </div>
             )}
@@ -103,7 +111,7 @@ const PriceDisplay: React.FC<{
           <div className="text-sm font-bold">价格未知</div>
         )}
       </div>
-      <div className="mt-0.5">
+      <div className="mt-0.5 flex items-center justify-between">
         {priceData.change24h !== null ? (
           <div 
             className={`text-xs font-semibold tracking-wide
@@ -113,6 +121,14 @@ const PriceDisplay: React.FC<{
           </div>
         ) : (
           <div className="text-sm">--</div>
+        )}
+        {priceDiff !== null && (
+          <div 
+            className={`text-[9px] font-mono opacity-70
+              ${priceDiff >= 0 ? 'text-green-500' : 'text-red-500'}`}
+          >
+            {priceDiff >= 0 ? '+' : ''}{priceDiff.toFixed(3)}%
+          </div>
         )}
       </div>
     </>
@@ -174,7 +190,7 @@ const TokenItem: React.FC<{
       onDragOver={(e) => onDragOver(e, index)}
       onDragEnd={onDragEnd}
       onContextMenu={(e) => onContextMenu(e, token)}
-      className={`card bg-base-200 shadow-sm cursor-move
+      className={`card bg-base-200 shadow-sm cursor-move relative
         ${isDragged ? 'opacity-50' : ''}
         ${isDragOver ? 'ring-2 ring-primary' : ''}`}
     >

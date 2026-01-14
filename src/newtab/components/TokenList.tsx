@@ -17,9 +17,10 @@ interface TokenListProps {
 const PriceDisplay: React.FC<{
   symbol: string
 }> = React.memo(({ symbol }) => {
-  const { getTokenPrice, getTokenPriceChange } = useMarketStore()
+  const { getTokenPrice, getTokenIndexPrice, getTokenPriceChange } = useMarketStore()
   const [priceData, setPriceData] = useState({
     price: null as number | null,
+    indexPrice: null as number | null,
     previousPrice: null as number | null,
     change24h: null as number | null,
     isFlashing: false
@@ -28,13 +29,15 @@ const PriceDisplay: React.FC<{
   useEffect(() => {
     const updatePrice = () => {
       const newPrice = getTokenPrice(symbol)
+      const newIndexPrice = getTokenIndexPrice(symbol)
       const new24hChange = getTokenPriceChange(symbol, '24h')
       
       setPriceData(prev => {
         // 检查价格是否发生变化
-        if (newPrice !== prev.price) {
+        if (newPrice !== prev.price || newIndexPrice !== prev.indexPrice) {
           return {
             price: newPrice,
+            indexPrice: newIndexPrice,
             previousPrice: prev.price, // 保存前一次价格用于动效判断
             change24h: new24hChange,   // 24小时涨跌幅
             isFlashing: true
@@ -64,7 +67,7 @@ const PriceDisplay: React.FC<{
     updatePrice()
     const interval = setInterval(updatePrice, 2000)
     return () => clearInterval(interval)
-  }, [symbol, getTokenPrice, getTokenPriceChange])
+  }, [symbol, getTokenPrice, getTokenIndexPrice, getTokenPriceChange])
 
   // 计算实时价格变化方向（用于动效）
   const isPriceIncreased = useMemo(() => {
@@ -81,19 +84,26 @@ const PriceDisplay: React.FC<{
     <>
       <div className="mt-1">
         {priceData.price !== null ? (
-          <div 
-            className={`text-sm font-mono tracking-tight
-              ${isPriceIncreased ? 'text-green-500' : 'text-red-500'}
-              transition-all duration-300
-              ${priceData.isFlashing ? 'font-bold scale-105' : 'font-normal scale-100'}`}
-          >
-            ${priceData.price.toPrecision(5)}
+          <div className="flex items-baseline justify-between gap-2">
+            <div 
+              className={`text-sm font-mono tracking-tight
+                ${isPriceIncreased ? 'text-green-500' : 'text-red-500'}
+                transition-all duration-300
+                ${priceData.isFlashing ? 'font-bold scale-105' : 'font-normal scale-100'}`}
+            >
+              ${priceData.price.toPrecision(5)}
+            </div>
+            {priceData.indexPrice !== null && (
+              <div className="text-[9px] opacity-50 font-mono text-base-content/60">
+                ${priceData.indexPrice.toPrecision(5)}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-sm font-bold">价格未知</div>
         )}
       </div>
-      <div className="mt-1">
+      <div className="mt-0.5">
         {priceData.change24h !== null ? (
           <div 
             className={`text-xs font-semibold tracking-wide

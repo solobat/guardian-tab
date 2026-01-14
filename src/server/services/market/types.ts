@@ -6,6 +6,7 @@ export interface MarketInfo {
   baseToken: string              // 基础代币
   quoteToken: string             // 报价代币
   markPrice: number              // 标记价格
+  indexPrice?: number            // 指数价格
   isActive?: boolean              // 是否激活
   maxLeverage: number            // 最大杠杆
   volume24h?: number              // 24小时交易量

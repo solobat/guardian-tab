@@ -77,6 +77,7 @@ export class BybitMarketService extends BaseMarketService {
               baseToken,
               quoteToken: 'USDT',
               markPrice: parseFloat(instrument.markPrice),
+              indexPrice: parseFloat((instrument as any).indexPrice) || parseFloat(instrument.markPrice),
               maxLeverage: 100,
               fundingRate: fundingRate,
               fundingRateAnnualized: fundingRate * fundingRateDaily * 365,

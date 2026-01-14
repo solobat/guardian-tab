@@ -67,6 +67,7 @@ export class BinanceMarketService extends BaseMarketService {
           baseToken: baseToken,
           quoteToken: quoteToken,
           markPrice: parseFloat(market.markPrice) || 0,
+          indexPrice: parseFloat(market.indexPrice) || parseFloat(market.markPrice) || 0,
           maxLeverage: 125,
           openInterest: 0,
           fundingRate: (parseFloat(market.lastFundingRate) || 0) * 100,

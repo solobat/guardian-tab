@@ -20,6 +20,8 @@ interface MarketState {
   refreshInterval: number
   // 获取代币价格
   getTokenPrice: (symbol: string) => number | null
+  // 获取代币指数价格
+  getTokenIndexPrice: (symbol: string) => number | null
   // 获取代币价格变化百分比
   getTokenPriceChange: (symbol: string, timeframe?: '1h' | '24h') => number | null
   // 操作方法
@@ -88,6 +90,58 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
       if (market) {
         return market.markPrice
+      }
+    }
+
+    // 特殊处理稳定币
+    if (normalizedSymbol === 'USDT' || normalizedSymbol === 'USDC') {
+      return 1
+    }
+
+    return null
+  },
+
+  getTokenIndexPrice: (symbol: string) => {
+    const { markets } = get()
+    
+    // 检查是否是复合代币 (如 ETH/BTC)
+    if (symbol.includes('/')) {
+      const [baseSymbol, quoteSymbol] = symbol.split('/')
+      
+      // 获取基础代币和引用代币的指数价格
+      const baseIndexPrice = get().getTokenIndexPrice(baseSymbol)
+      const quoteIndexPrice = get().getTokenIndexPrice(quoteSymbol)
+      
+      // 如果两个价格都有效，计算比值
+      if (baseIndexPrice !== null && quoteIndexPrice !== null && quoteIndexPrice !== 0) {
+        return baseIndexPrice / quoteIndexPrice
+      }
+      
+      return null
+    }
+    
+    // 标准化代币符号
+    const normalizedSymbol = symbol.toUpperCase()
+    
+    // 遍历所有平台寻找匹配的市场
+    for (const platform of SUPPORTED_PLATFORMS) {
+      const platformMarkets = markets[platform] || []
+      
+      // 查找匹配的市场
+      const market = platformMarkets.find(m => {
+        // 检查 USDT 交易对
+        if (m.symbol === `${normalizedSymbol}/USDT` || m.symbol === `${normalizedSymbol}USDT`) {
+          return true
+        }
+        // 检查 USDC 交易对
+        if (m.symbol === `${normalizedSymbol}/USDC` || m.symbol === `${normalizedSymbol}USDC`) {
+          return true
+        }
+        return false
+      })
+
+      if (market && market.indexPrice !== undefined) {
+        return market.indexPrice
       }
     }
 

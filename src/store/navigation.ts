@@ -39,7 +39,7 @@ interface NavigationState {
   updateNavigation: (id: string, updates: Partial<Navigation>) => void
   fetchNavigations: () => Promise<void>
   isAllowedDomain: (url: string) => boolean
-  reorderNavigations: (sourceIndex: number, destinationIndex: number) => void
+  reorderNavigations: (sourceIndex: number, destinationIndex: number, activeCount: number) => void
   setEditingNavigation: (navigation: Navigation | null) => void
   incrementClickCount: (id: string) => void
   getUnusedNavigations: () => Navigation[]
@@ -57,6 +57,19 @@ const backupToLocalStorage = (navigations: Navigation[]) => {
   } catch (error) {
     console.error('备份导航数据到 localStorage 失败:', error)
   }
+}
+
+/** 确保所有导航都有 orderIndex，旧数据按原数组顺序补全 */
+const ensureOrderIndex = (navigations: Navigation[]): Navigation[] => {
+  return navigations.map((nav, index) => ({
+    ...nav,
+    orderIndex: nav.orderIndex ?? index
+  }))
+}
+
+/** 按 orderIndex 排序（手动顺序优先，与点击次数无关） */
+const sortByOrderIndex = (navigations: Navigation[]): Navigation[] => {
+  return [...navigations].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
 }
 
 // 从 localStorage 恢复备份的函数
@@ -86,12 +99,18 @@ export const useNavigationStore = create<NavigationState>()(
       
       addNavigation: (navigation) => {
         set((state) => {
-          const newNavigations = [...state.navigations, { 
-            ...navigation, 
+          const sorted = sortByOrderIndex(ensureOrderIndex(state.navigations))
+          const maxOrderIndex = sorted.length > 0 
+            ? Math.max(...sorted.map(n => n.orderIndex ?? 0)) 
+            : -1
+          const newNav: Navigation = {
+            ...navigation,
             id: Date.now().toString(),
             clickCount: 0,
-            createdAt: Date.now()
-          }]
+            createdAt: Date.now(),
+            orderIndex: maxOrderIndex + 1  // 新项追加到末尾，不参与点击排序
+          }
+          const newNavigations = [...state.navigations, newNav]
           backupToLocalStorage(newNavigations)
           return { navigations: newNavigations }
         })
@@ -138,12 +157,12 @@ export const useNavigationStore = create<NavigationState>()(
               const parsedData = JSON.parse(storageData['navigation-storage'])
               storedNavigations = parsedData.state?.navigations || []
               
-              // 添加数据迁移逻辑
-              storedNavigations = storedNavigations.map(nav => ({
+              // 添加数据迁移逻辑（含 orderIndex 补全）
+              storedNavigations = ensureOrderIndex(storedNavigations.map(nav => ({
                 ...nav,
                 clickCount: nav.clickCount || 0,
                 createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000 // 默认设为25小时前
-              }))
+              })))
             } catch (error) {
               console.error('解析导航数据失败:', error)
             }
@@ -159,12 +178,12 @@ export const useNavigationStore = create<NavigationState>()(
             const backupNavigations = restoreFromLocalStorage()
             
             if (backupNavigations.length > 0) {
-              // 对备份数据也进行迁移
-              const migratedBackupNavigations = backupNavigations.map(nav => ({
+              // 对备份数据也进行迁移（含 orderIndex 补全）
+              const migratedBackupNavigations = ensureOrderIndex(backupNavigations.map(nav => ({
                 ...nav,
                 clickCount: nav.clickCount || 0,
                 createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
-              }))
+              })))
               
               set({
                 navigations: migratedBackupNavigations,
@@ -182,11 +201,11 @@ export const useNavigationStore = create<NavigationState>()(
           const backupNavigations = restoreFromLocalStorage()
           
           if (backupNavigations.length > 0) {
-            const migratedBackupNavigations = backupNavigations.map(nav => ({
+            const migratedBackupNavigations = ensureOrderIndex(backupNavigations.map(nav => ({
               ...nav,
               clickCount: nav.clickCount || 0,
               createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
-            }))
+            })))
             
             set({
               navigations: migratedBackupNavigations,
@@ -213,14 +232,39 @@ export const useNavigationStore = create<NavigationState>()(
         }
       },
       
-      // 重新排序导航
-      reorderNavigations: (sourceIndex, destinationIndex) => {
+      // 重新排序导航（手动拖拽优先，仅在当前分组内重排，不影响另一组）
+      reorderNavigations: (sourceIndex, destinationIndex, activeCount) => {
         set((state) => {
-          const newNavigations = [...state.navigations]
-          const [removed] = newNavigations.splice(sourceIndex, 1)
-          newNavigations.splice(destinationIndex, 0, removed)
+          const navigationsWithOrder = ensureOrderIndex(state.navigations)
+          const sorted = sortByOrderIndex(navigationsWithOrder)
+          const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+          const isActive = (nav: Navigation) => nav.clickCount > 0 || nav.createdAt >= oneDayAgo
           
-          // 重新排序后备份到 localStorage
+          const activeList = sorted.filter(isActive)
+          const unusedList = sorted.filter(nav => !isActive(nav))
+          
+          const isReorderInActive = sourceIndex < activeCount && destinationIndex < activeCount
+          const isReorderInUnused = sourceIndex >= activeCount && destinationIndex >= activeCount
+          
+          let reorderedActive = activeList
+          let reorderedUnused = unusedList
+          
+          if (isReorderInActive) {
+            const [removed] = activeList.splice(sourceIndex, 1)
+            activeList.splice(destinationIndex, 0, removed)
+            reorderedActive = activeList
+          } else if (isReorderInUnused) {
+            const unusedSource = sourceIndex - activeCount
+            const unusedDest = destinationIndex - activeCount
+            const [removed] = unusedList.splice(unusedSource, 1)
+            unusedList.splice(unusedDest, 0, removed)
+            reorderedUnused = unusedList
+          }
+          
+          // 按新顺序重写 orderIndex，手动顺序持久化
+          const reordered = [...reorderedActive, ...reorderedUnused]
+          const newNavigations = reordered.map((nav, i) => ({ ...nav, orderIndex: i }))
+          
           backupToLocalStorage(newNavigations)
           return { navigations: newNavigations }
         })
@@ -243,26 +287,17 @@ export const useNavigationStore = create<NavigationState>()(
       getUnusedNavigations: () => {
         const { navigations } = get()
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
-        const unused = navigations.filter(nav => {
-          const isUnused = (nav.clickCount === 0 && nav.createdAt < oneDayAgo)
-          console.log(`导航 ${nav.name} 检查:`, {
-            clickCount: nav.clickCount,
-            createdAt: new Date(nav.createdAt).toISOString(),
-            isOld: nav.createdAt < oneDayAgo,
-            isUnused
-          })
-          return isUnused
-        })
-        console.log('未使用导航:', unused)
-        return unused
+        const withOrder = ensureOrderIndex(navigations)
+        const sorted = sortByOrderIndex(withOrder)
+        return sorted.filter(nav => nav.clickCount === 0 && nav.createdAt < oneDayAgo)
       },
 
       getActiveNavigations: () => {
         const { navigations } = get()
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
-        return navigations.filter(nav => 
-          nav.clickCount > 0 || nav.createdAt >= oneDayAgo
-        )
+        const withOrder = ensureOrderIndex(navigations)
+        const sorted = sortByOrderIndex(withOrder)
+        return sorted.filter(nav => nav.clickCount > 0 || nav.createdAt >= oneDayAgo)
       },
 
       resetNavigation: (id: string) => {
@@ -283,10 +318,11 @@ export const useNavigationStore = create<NavigationState>()(
       name: 'navigation-storage',
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ 
-        navigations: state.navigations.map(nav => ({
+        navigations: ensureOrderIndex(state.navigations).map(nav => ({
           ...nav,
           clickCount: nav.clickCount || 0,
-          createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000
+          createdAt: nav.createdAt || Date.now() - 25 * 60 * 60 * 1000,
+          orderIndex: nav.orderIndex ?? 0
         })),
         editingNavigation: undefined
       }),

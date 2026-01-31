@@ -73,7 +73,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({ navigations }) => {
   
   const handleDragEnd = () => {
     if (draggedItem !== null && dragOverItem !== null && draggedItem !== dragOverItem) {
-      reorderNavigations(draggedItem, dragOverItem)
+      reorderNavigations(draggedItem, dragOverItem, activeNavigations.length)
     }
     
     // 重置状态

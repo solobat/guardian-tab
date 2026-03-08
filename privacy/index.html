@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隐私权政策 - Guardian Tab</title>
+  <meta name="description" content="Guardian Tab Chrome 扩展的隐私权政策">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0ea5e9;
+      --color-primary-dark: #0369a1;
+      --color-bg: #f8fafc;
+      --color-bg-dark: #0f172a;
+      --color-text: #1e293b;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      color: var(--color-text);
+      background: var(--color-bg);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      color: white;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--color-primary-dark);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+
+    ul {
+      margin: 1rem 0 1rem 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border: 1px solid var(--color-border);
+    }
+
+    th {
+      background: var(--color-bg);
+      font-weight: 600;
+      color: var(--color-primary-dark);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--color-text-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .last-updated {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Guardian Tab 隐私权政策</h1>
+    <p>Chrome 扩展 · 最后更新：2025年3月</p>
+  </header>
+
+  <main class="container">
+    <p class="last-updated">本隐私权政策说明了 Guardian Tab Chrome 扩展（以下简称「本扩展」）如何收集、使用和保护您的信息。使用本扩展即表示您同意本政策。</p>
+
+    <section>
+      <h2>一、我们收集的数据</h2>
+      <p><strong>本扩展不收集、不上传任何个人数据。</strong>所有用户配置（包括自定义导航、代币列表、壁纸设置、主题偏好等）均仅保存在您设备本地的浏览器存储中，不会传输至任何外部服务器。</p>
+    </section>
+
+    <section>
+      <h2>二、权限使用说明</h2>
+      <p>为提供完整功能，本扩展需要以下权限。我们承诺仅将权限用于所述用途：</p>
+      <table>
+        <thead>
+          <tr>
+            <th>权限</th>
+            <th>用途说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>storage</strong></td>
+            <td>在本地保存您的自定义导航列表、代币配置、壁纸设置和主题偏好，以便在新标签页中恢复您的个人配置。</td>
+          </tr>
+          <tr>
+            <td><strong>webNavigation</strong></td>
+            <td>监听页面导航事件，判断您访问的网址是否在您设置的导航白名单中，以实现安全导航保护功能。</td>
+          </tr>
+          <tr>
+            <td><strong>host_permissions</strong><br>（&lt;all_urls&gt;）</td>
+            <td>1）向 Binance、Bybit 等交易所 API 发起请求以获取加密货币行情数据；2）在安全导航保护功能中解析您访问的 URL，判断是否属于白名单域名。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>三、数据存储与安全</h2>
+      <ul>
+        <li>所有数据均存储在 Chrome 的本地存储（chrome.storage.local）中，仅限您的浏览器访问。</li>
+        <li>我们不会将您的数据分享给任何第三方。</li>
+        <li>卸载本扩展后，相关本地数据将随扩展一并移除。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>四、第三方服务</h2>
+      <p>本扩展会向以下第三方 API 请求公开市场数据（仅限价格等公开信息，不涉及个人数据）：</p>
+      <ul>
+        <li>Binance API - 加密货币行情</li>
+        <li>Bybit API - 加密货币行情</li>
+      </ul>
+      <p>这些请求由您的浏览器直接发起，我们不会经手或存储这些数据。</p>
+    </section>
+
+    <section>
+      <h2>五、政策变更</h2>
+      <p>我们可能会不时更新本隐私权政策。重大变更将在扩展更新说明或本页面中公布。继续使用本扩展即表示您接受更新后的政策。</p>
+    </section>
+
+    <section>
+      <h2>六、联系我们</h2>
+      <p>如对本隐私权政策有任何疑问，请通过以下方式联系我们：</p>
+      <ul>
+        <li>GitHub 仓库：<a href="https://github.com/tomasyang/guardian-tab" target="_blank" rel="noopener">guardian-tab</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Guardian Tab · <a href="https://github.com/tomasyang/guardian-tab">GitHub</a></p>
+  </footer>
+</body>
+</html>

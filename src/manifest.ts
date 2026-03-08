@@ -27,9 +27,7 @@ export default defineManifest({
   ],
   permissions: [
     "storage",
-    "webNavigation",
-    "webRequest",
-    "declarativeNetRequest"
+    "webNavigation"
   ],
   host_permissions: [
     "<all_urls>"

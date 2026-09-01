@@ -161,7 +161,11 @@
           </tr>
           <tr>
             <td><strong>host_permissions</strong><br>（&lt;all_urls&gt;）</td>
-            <td>1）向 Binance、Bybit 等交易所 API 发起请求以获取加密货币行情数据；2）在安全导航保护功能中解析您访问的 URL，判断是否属于白名单域名。</td>
+            <td>1）向 Binance、Bybit 等交易所 API 发起请求以获取加密货币行情数据；2）在安全导航保护功能中解析您访问的 URL，判断是否属于白名单域名；3）<strong>可选的</strong> Google Safe Browsing 威胁检测（仅在您主动开启并填写 API Key 后生效）。</td>
+          </tr>
+          <tr>
+            <td><strong>content_scripts</strong></td>
+            <td>在网页中扫描外链，识别与白名单域名相似的钓鱼链接或含敏感诱导词的链接并提示。此扫描完全在本地完成，不发送任何数据。</td>
           </tr>
         </tbody>
       </table>
@@ -171,6 +175,7 @@
       <h2>三、数据存储与安全</h2>
       <ul>
         <li>所有数据均存储在 Chrome 的本地存储（chrome.storage.local）中，仅限您的浏览器访问。</li>
+        <li>临时放行记录与威胁检测缓存仅保存在内存级存储（chrome.storage.session）中，浏览器重启后自动清除。</li>
         <li>我们不会将您的数据分享给任何第三方。</li>
         <li>卸载本扩展后，相关本地数据将随扩展一并移除。</li>
       </ul>
@@ -184,6 +189,12 @@
         <li>Bybit API - 加密货币行情</li>
       </ul>
       <p>这些请求由您的浏览器直接发起，我们不会经手或存储这些数据。</p>
+      <p>
+        <strong>可选的 Google Safe Browsing 服务</strong>：如果您在设置中主动开启「Google Safe Browsing
+        实时检测」并填写自己的 API Key，扩展会将您访问的域名发送至 Google Safe Browsing API
+        进行恶意网站检测（检测结果本地缓存 30 分钟）。该功能默认关闭，未开启时不会向 Google
+        发送任何数据。
+      </p>
     </section>
 
     <section>

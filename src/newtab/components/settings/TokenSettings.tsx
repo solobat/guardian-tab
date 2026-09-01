@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useTokenStore } from '../../../store/token'
 import { Token } from '../../../types/token'
+import { getCryptoLogoUrl } from '../../../utils/token'
+import { FALLBACK_ICON } from '../../../const'
 import { DeleteIcon, EditIcon } from '../../../assets/icons'
 
-interface TokenSettingsProps {
-  editingTokenId?: string
-}
-
-const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
-  console.log('editingTokenId', editingTokenId)
-  const { tokens, addToken, removeToken, updateToken, editingToken, setEditingToken } = useTokenStore()
+const TokenSettings: React.FC = () => {
+  const { tokens, addToken, removeToken, updateToken, editingToken, setEditingToken } =
+    useTokenStore()
 
   // Token 表单状态
   const [newToken, setNewToken] = useState<Partial<Token>>({
@@ -26,48 +24,38 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
       icon: token?.icon || '',
     })
   }
-  // 当编辑的代币变化时，更新表单
-  useEffect(() => {
-    if (editingTokenId) {
-      const token = tokens.find(token => token.id === editingTokenId)
-      setEditingTokenAndNewToken(token || null)
-    } else {
-      setEditingToken(null)
-      setNewToken({ name: '', symbol: '', icon: '' })
-    }
-  }, [editingTokenId, tokens, setEditingToken])
 
   // 当名称或符号变化时，自动生成图标URL
   useEffect(() => {
-    if (newToken.name && newToken.symbol && (!editingToken || !editingToken.icon)) {
-      // 获取格式化的符号（小写）
-      const formattedSymbol = newToken.symbol.toLowerCase()
-      // 构建图标URL
-      const iconUrl = `https://cryptologos.cc/logos/${newToken.name.toLowerCase()}-${formattedSymbol}-logo.png`
-      setNewToken(prev => ({ ...prev, icon: iconUrl }))
+    const name = newToken.name?.trim()
+    const symbol = newToken.symbol?.trim()
+    if (name && symbol && (!editingToken || !editingToken.icon)) {
+      setNewToken((prev) => ({ ...prev, icon: getCryptoLogoUrl(name, symbol) }))
     }
   }, [newToken.name, newToken.symbol, editingToken])
 
   const handleSubmit = () => {
-    if (newToken.name && newToken.symbol) {
-      if (editingToken) {
-        // 更新现有代币
-        updateToken(editingToken.id, {
-          name: newToken.name,
-          symbol: newToken.symbol,
-          icon: newToken.icon || '',
-        })
-      } else {
-        // 添加新代币
-        addToken({
-          id: Date.now().toString(),
-          name: newToken.name,
-          symbol: newToken.symbol,
-          icon: newToken.icon || '',
-        })
-      }
-      setNewToken({ name: '', symbol: '', icon: '' })
+    const name = newToken.name?.trim() || ''
+    const symbol = newToken.symbol?.trim().toUpperCase() || ''
+    if (!name || !symbol) return
+
+    if (editingToken) {
+      // 更新现有代币
+      updateToken(editingToken.id, {
+        name,
+        symbol,
+        icon: newToken.icon?.trim() || '',
+      })
+    } else {
+      // 添加新代币
+      addToken({
+        id: Date.now().toString(),
+        name,
+        symbol,
+        icon: newToken.icon?.trim() || '',
+      })
     }
+    setNewToken({ name: '', symbol: '', icon: '' })
   }
 
   const handleCancel = () => {
@@ -75,12 +63,14 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
     setNewToken({ name: '', symbol: '', icon: '' })
   }
 
-  // 使用 editingTokenId 来高亮或展开正在编辑的代币项
-  useEffect(() => {
-    if (editingTokenId) {
-      // 可以滚动到对应的项，或者展开编辑表单等
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
     }
-  }, [editingTokenId])
+  }
+
+  const canSubmit = Boolean(newToken.name?.trim() && newToken.symbol?.trim())
 
   return (
     <div>
@@ -92,6 +82,8 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
             className="input input-bordered"
             value={newToken.name}
             onChange={(e) => setNewToken({ ...newToken, name: e.target.value })}
+            onKeyDown={handleKeyDown}
+            autoFocus
           />
           <input
             type="text"
@@ -99,6 +91,7 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
             className="input input-bordered"
             value={newToken.symbol}
             onChange={(e) => setNewToken({ ...newToken, symbol: e.target.value })}
+            onKeyDown={handleKeyDown}
           />
           <div className="flex gap-2">
             <input
@@ -107,17 +100,16 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
               className="input input-bordered flex-grow"
               value={newToken.icon || ''}
               onChange={(e) => setNewToken({ ...newToken, icon: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
             {newToken.icon && (
               <div className="w-10 h-10 flex items-center justify-center bg-base-200 rounded">
-                <img 
-                  src={newToken.icon} 
-                  alt="预览" 
+                <img
+                  src={newToken.icon}
+                  alt="预览"
                   className="max-w-[80%] max-h-[80%] object-contain"
                   onError={(e) => {
-                    // 如果图片加载失败，清空图标URL
-                    const target = e.target as HTMLImageElement
-                    target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                    e.currentTarget.src = FALLBACK_ICON
                   }}
                 />
               </div>
@@ -125,7 +117,7 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
           </div>
         </div>
         <div className="flex gap-2 mt-2">
-          <button className="btn btn-primary" onClick={handleSubmit}>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
             {editingToken ? '更新代币' : '添加代币'}
           </button>
           {editingToken && (
@@ -154,13 +146,12 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
                 <td>
                   <div className="w-8 h-8 flex items-center justify-center bg-base-200 rounded">
                     {token.icon && (
-                      <img 
-                        src={token.icon} 
-                        alt={token.name} 
+                      <img
+                        src={token.icon}
+                        alt={token.name}
                         className="max-w-[80%] max-h-[80%] object-contain"
                         onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                          e.currentTarget.src = FALLBACK_ICON
                         }}
                       />
                     )}
@@ -193,4 +184,4 @@ const TokenSettings: React.FC<TokenSettingsProps> = ({ editingTokenId }) => {
   )
 }
 
-export default TokenSettings 
+export default TokenSettings

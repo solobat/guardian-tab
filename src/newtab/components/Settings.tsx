@@ -1,113 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { useTokenStore } from '../../store/token'
-import { useNavigationStore } from '../../store/navigation'
-import { Token } from '../../types/token'
-import { Navigation } from '../../types/navigation'
-import { SettingsIcon, DeleteIcon } from '../../assets/icons'
+import { SettingsIcon } from '../../assets/icons'
 import TokenSettings from './settings/TokenSettings'
 import NavigationSettings from './settings/NavigationSettings'
-import { eventBus } from '../../utils/eventBus'
+import SecuritySettings from './settings/SecuritySettings'
 
 const Settings: React.FC = () => {
-  const { tokens, addToken, removeToken, updateToken } = useTokenStore()
-  const { navigations, addNavigation, removeNavigation, updateNavigation } = useNavigationStore()
-
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('tokens')
-  const [editingItem, setEditingItem] = useState<{ id: string, type: 'token' | 'navigation' } | null>(null)
 
-  // Token 表单状态
-  const [newToken, setNewToken] = useState<Partial<Token>>({
-    name: '',
-    symbol: '',
-    icon: '',
-  })
-
-  // Navigation 表单状态
-  const [newNavigation, setNewNavigation] = useState<Partial<Navigation>>({
-    name: '',
-    url: '',
-    icon: '',
-  })
-
-  // 当名称或符号变化时，自动生成图标URL
+  // Esc 关闭弹窗
   useEffect(() => {
-    if (newToken.name && newToken.symbol) {
-      // 获取格式化的符号（小写）
-      const formattedSymbol = newToken.symbol.toLowerCase()
-      // 构建图标URL
-      const iconUrl = `https://cryptologos.cc/logos/${newToken.name.toLowerCase()}-${formattedSymbol}-logo.png`
-      setNewToken(prev => ({ ...prev, icon: iconUrl }))
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
     }
-  }, [newToken.name, newToken.symbol])
-
-  useEffect(() => {
-    const handleOpenSettings = (data: { 
-      tab: 'tokens' | 'navigations',
-      itemId: string 
-    }) => {
-      setIsOpen(true)
-      setActiveTab(data.tab)
-      setEditingItem({ 
-        id: data.itemId, 
-        type: data.tab === 'tokens' ? 'token' : 'navigation' 
-      })
-    }
-
-    eventBus.on('openSettings', handleOpenSettings)
-    return () => eventBus.off('openSettings', handleOpenSettings)
-  }, [])
-
-  // 当对话框关闭时重置编辑状态
-  useEffect(() => {
-    if (!isOpen) {
-      setEditingItem(null)
-    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen])
-
-  const handleAddToken = () => {
-    if (newToken.name && newToken.symbol) {
-      addToken({
-        id: Date.now().toString(),
-        name: newToken.name,
-        symbol: newToken.symbol,
-        icon: newToken.icon || '',
-      })
-      setNewToken({ name: '', symbol: '', icon: '' })
-    }
-  }
-
-  const handleAddNavigation = () => {
-    if (newNavigation.name && newNavigation.url) {
-      addNavigation({
-        id: Date.now().toString(),
-        name: newNavigation.name,
-        url: newNavigation.url,
-        icon: newNavigation.icon || '',
-        clickCount: 0,
-        createdAt: Date.now(),
-      })
-      setNewNavigation({ name: '', url: '', icon: '' })
-    }
-  }
-
-  // 尝试从URL获取favicon
-  const handleNavigationNameOrUrlChange = (field: string, value: string) => {
-    const updatedNavigation = { ...newNavigation, [field]: value }
-    
-    // 如果URL已填写且图标为空，尝试获取favicon
-    if (field === 'url' && value && !newNavigation.icon) {
-      try {
-        const url = new URL(value)
-        const faviconUrl = `${url.protocol}//${url.hostname}/favicon.ico`
-        updatedNavigation.icon = faviconUrl
-      } catch (e) {
-        // URL格式不正确，忽略
-      }
-    }
-    
-    setNewNavigation(updatedNavigation)
-  }
 
   return (
     <>
@@ -120,8 +29,14 @@ const Settings: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-base-100 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-auto">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="bg-base-100 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">设置</h2>
               <button className="btn btn-sm btn-circle" onClick={() => setIsOpen(false)}>
@@ -142,14 +57,21 @@ const Settings: React.FC = () => {
               >
                 导航
               </a>
+              <a
+                className={`tab ${activeTab === 'security' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('security')}
+              >
+                安全
+              </a>
             </div>
 
-            {activeTab === 'tokens' && (
-              <TokenSettings editingTokenId={editingItem?.type === 'token' ? editingItem.id : undefined} />
-            )}
-            {activeTab === 'navigations' && (
-              <NavigationSettings editingNavId={editingItem?.type === 'navigation' ? editingItem.id : undefined} />
-            )}
+            <p className="text-xs opacity-60 mb-4">
+              提示：在首页点击「＋ 添加代币 / 添加导航」卡片可快速添加，悬停卡片可直接编辑或删除
+            </p>
+
+            {activeTab === 'tokens' && <TokenSettings />}
+            {activeTab === 'navigations' && <NavigationSettings />}
+            {activeTab === 'security' && <SecuritySettings />}
           </div>
         </div>
       )}

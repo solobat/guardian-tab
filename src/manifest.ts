@@ -25,21 +25,25 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: [
-    "storage",
-    "webNavigation"
-  ],
-  host_permissions: [
-    "<all_urls>"
+  permissions: ['storage', 'webNavigation'],
+  host_permissions: ['<all_urls>', 'https://safebrowsing.googleapis.com/*'],
+  content_scripts: [
+    {
+      matches: ['http://*/*', 'https://*/*'],
+      js: ['src/content/index.ts'],
+      run_at: 'document_idle',
+      all_frames: false,
+    },
   ],
   chrome_url_overrides: {
     newtab: 'newtab.html',
   },
   background: {
     service_worker: 'src/background/index.ts',
-    type: 'module'
+    type: 'module',
   },
   content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'self'"
-  }
+    extension_pages:
+      "script-src 'self'; object-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'",
+  },
 })

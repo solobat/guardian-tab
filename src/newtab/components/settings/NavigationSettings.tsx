@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigationStore } from '../../../store/navigation'
 import { Navigation } from '../../../types/navigation'
+import { getFaviconUrl } from '../../../utils/favicon'
+import { isSafeNavUrl } from '../../../utils/url'
+import { FALLBACK_ICON } from '../../../const'
 import { DeleteIcon, EditIcon } from '../../../assets/icons'
 
-interface NavigationSettingsProps {
-  editingNavId?: string
-}
-
-const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId }) => {
+const NavigationSettings: React.FC = () => {
   const { navigations, addNavigation, removeNavigation, updateNavigation } = useNavigationStore()
   const [editingNavigation, setEditingNavigation] = useState<Navigation | null>(null)
+  const [urlError, setUrlError] = useState('')
 
   // Navigation 表单状态
   const [newNavigation, setNewNavigation] = useState<Partial<Navigation>>({
@@ -27,62 +27,65 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
     })
   }
 
-  // 当编辑的导航变化时，更新表单
-  useEffect(() => {
-    if (editingNavId) {
-      const navigation = navigations.find(nav => nav.id === editingNavId)
-      setEditingNavigationAndNewNav(navigation || null)
-    } else {
-      setEditingNavigation(null)
-      setNewNavigation({ name: '', url: '', icon: '' })
-    }
-  }, [editingNavId, navigations])
-
   const handleSubmit = () => {
-    if (newNavigation.name && newNavigation.url) {
-      if (editingNavigation) {
-        // 更新现有导航
-        updateNavigation(editingNavigation.id, {
-          name: newNavigation.name,
-          url: newNavigation.url,
-          icon: newNavigation.icon || '',
-        })
-      } else {
-        // 添加新导航
-        addNavigation({
-          id: Date.now().toString(),
-          name: newNavigation.name,
-          url: newNavigation.url,
-          icon: newNavigation.icon || '',
-          clickCount: 0,
-          createdAt: Date.now(),
-        })
-      }
-      setEditingNavigationAndNewNav(null)
+    const name = newNavigation.name?.trim() || ''
+    const url = newNavigation.url?.trim() || ''
+    if (!name || !url) return
+
+    // 安全校验：仅允许 http/https（防止 javascript: 等协议在扩展页执行脚本）
+    if (!isSafeNavUrl(url)) {
+      setUrlError('仅支持 http:// 或 https:// 链接')
+      return
     }
+    setUrlError('')
+
+    if (editingNavigation) {
+      // 更新现有导航
+      updateNavigation(editingNavigation.id, {
+        name,
+        url,
+        icon: newNavigation.icon?.trim() || '',
+      })
+    } else {
+      // 添加新导航
+      addNavigation({
+        id: Date.now().toString(),
+        name,
+        url,
+        icon: newNavigation.icon?.trim() || '',
+        clickCount: 0,
+        createdAt: Date.now(),
+      })
+    }
+    setEditingNavigationAndNewNav(null)
   }
 
   const handleCancel = () => {
     setEditingNavigationAndNewNav(null)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   // 尝试从URL获取favicon
   const handleNavigationNameOrUrlChange = (field: string, value: string) => {
     const updatedNavigation = { ...newNavigation, [field]: value }
-    
-    // 如果URL已填写且图标为空，尝试获取favicon
+
+    if (urlError) setUrlError('')
+
+    // 如果URL已填写且图标为空，自动获取favicon
     if (field === 'url' && value && !newNavigation.icon) {
-      try {
-        const url = new URL(value)
-        const faviconUrl = `${url.protocol}//${url.hostname}/favicon.ico`
-        updatedNavigation.icon = faviconUrl
-      } catch (e) {
-        // URL格式不正确，忽略
-      }
+      updatedNavigation.icon = getFaviconUrl(value)
     }
-    
+
     setNewNavigation(updatedNavigation)
   }
+
+  const canSubmit = Boolean(newNavigation.name?.trim() && newNavigation.url?.trim())
 
   return (
     <div>
@@ -94,6 +97,8 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
             className="input input-bordered"
             value={newNavigation.name}
             onChange={(e) => handleNavigationNameOrUrlChange('name', e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
           />
           <input
             type="text"
@@ -101,6 +106,7 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
             className="input input-bordered"
             value={newNavigation.url}
             onChange={(e) => handleNavigationNameOrUrlChange('url', e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <div className="flex gap-2">
             <input
@@ -109,16 +115,16 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
               className="input input-bordered flex-grow"
               value={newNavigation.icon || ''}
               onChange={(e) => setNewNavigation({ ...newNavigation, icon: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
             {newNavigation.icon && (
               <div className="w-10 h-10 flex items-center justify-center bg-base-200 rounded">
-                <img 
-                  src={newNavigation.icon} 
-                  alt="预览" 
+                <img
+                  src={newNavigation.icon}
+                  alt="预览"
                   className="max-w-[80%] max-h-[80%] object-contain"
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                    e.currentTarget.src = FALLBACK_ICON
                   }}
                 />
               </div>
@@ -126,7 +132,7 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
           </div>
         </div>
         <div className="flex gap-2 mt-2">
-          <button className="btn btn-primary" onClick={handleSubmit}>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
             {editingNavigation ? '更新导航' : '添加导航'}
           </button>
           {editingNavigation && (
@@ -135,6 +141,7 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
             </button>
           )}
         </div>
+        {urlError && <p className="text-error text-xs mt-2">{urlError}</p>}
       </div>
 
       <div className="overflow-x-auto">
@@ -162,6 +169,13 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
                       rel="noopener noreferrer"
                       className="link block truncate"
                       title={nav.url}
+                      onClick={(e) => {
+                        // 兜底防护：旧数据中可能残留 javascript: 等危险链接
+                        if (!isSafeNavUrl(nav.url)) {
+                          e.preventDefault()
+                          alert('该导航链接不安全（仅支持 http/https），已阻止访问')
+                        }
+                      }}
                     >
                       {nav.url}
                     </a>
@@ -170,13 +184,12 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
                 <td>
                   <div className="w-8 h-8 flex items-center justify-center bg-base-200 rounded">
                     {nav.icon && (
-                      <img 
-                        src={nav.icon} 
-                        alt={nav.name} 
+                      <img
+                        src={nav.icon}
+                        alt={nav.name}
                         className="max-w-[80%] max-h-[80%] object-contain"
                         onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIj48L2NpcmNsZT48bGluZSB4MT0iMTIiIHkxPSI4IiB4Mj0iMTIiIHkyPSIxMiI+PC9saW5lPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=='
+                          e.currentTarget.src = FALLBACK_ICON
                         }}
                       />
                     )}
@@ -215,4 +228,4 @@ const NavigationSettings: React.FC<NavigationSettingsProps> = ({ editingNavId })
   )
 }
 
-export default NavigationSettings 
+export default NavigationSettings

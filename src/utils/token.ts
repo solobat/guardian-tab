@@ -9,18 +9,21 @@
 export function isTokenMatch(token1: string, token2: string): boolean {
   // 先进行直接比较
   if (token1.toUpperCase() === token2.toUpperCase()) {
-    return true;
+    return true
   }
 
   // 如果直接比较不相等，则进行标准化比较
   const normalizeToken = (token: string): string => {
     // 只移除开头的 'k' 和 'm' 前缀
-    const withoutPrefix = token.toUpperCase().trim().replace(/^[KM](?=[A-Z])/, '');
+    const withoutPrefix = token
+      .toUpperCase()
+      .trim()
+      .replace(/^[KM](?=[A-Z])/, '')
     // 只移除 1000 或 1000000 后缀
-    return withoutPrefix.replace(/(1000000|1000)$/, '');
-  };
+    return withoutPrefix.replace(/(1000000|1000)$/, '')
+  }
 
-  return normalizeToken(token1) === normalizeToken(token2);
+  return normalizeToken(token1) === normalizeToken(token2)
 }
 
 // 使用示例：
@@ -30,3 +33,10 @@ console.log(isTokenMatch('SHIB', 'kSHIB')); // true（标准化后匹配）
 console.log(isTokenMatch('KMTOKEN', 'KMTOKEN')); // true（直接匹配）
 console.log(isTokenMatch('SHIB1000', 'kSHIB')); // true（标准化后匹配）
 */
+
+/**
+ * 根据代币名称与符号自动生成加密货币图标 URL（cryptologos.cc）
+ */
+export function getCryptoLogoUrl(name: string, symbol: string): string {
+  return `https://cryptologos.cc/logos/${name.toLowerCase()}-${symbol.toLowerCase()}-logo.png`
+}

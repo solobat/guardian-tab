@@ -26,7 +26,10 @@ export default defineManifest({
     },
   ],
   permissions: ['storage', 'webNavigation'],
-  host_permissions: ['<all_urls>', 'https://safebrowsing.googleapis.com/*'],
+  host_permissions: ['<all_urls>'],
+  // Safe Browsing 为可选功能：仅在用户主动开启时申请该域名权限，
+  // 避免版本更新时因权限增加导致老用户的扩展被停用
+  optional_host_permissions: ['https://safebrowsing.googleapis.com/*'],
   content_scripts: [
     {
       matches: ['http://*/*', 'https://*/*'],

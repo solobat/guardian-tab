@@ -1,7 +1,7 @@
 {
   "name": "guardian-tab",
   "displayName": "Guardian Tab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "tomasy",
   "description": "自定义新标签页，整合加密货币行情、自定义导航与安全导航保护",
   "type": "module",
